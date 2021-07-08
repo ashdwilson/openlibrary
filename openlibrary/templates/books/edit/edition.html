@@ -403,80 +403,81 @@ $jsdef render_work_autocomplete_item(item):
     </div>
 
 </fieldset>
-$ config = ({'Please select an identifier.': _('Please select an identifier.'), 'You need to give a value to ID.': _('You need to give a value to ID.'), 'ID ids cannot contain whitespace.': _('ID ids cannot contain whitespace.'), 'ID must be exactly 10 characters [0-9] or X.': _('ID must be exactly 10 characters [0-9] or X.'), 'ID must be exactly 13 digits [0-9]. For example: 978-1-56619-909-4': _('ID must be exactly 13 digits [0-9]. For example: 978-1-56619-909-4')})
-<fieldset class="major" id="identifiers" data-config="$dumps(config)">
-    <legend>$_("ID Numbers")</legend>
-    <div class="formBack">
+$if ctx.user and (ctx.user.is_admin() or ctx.user.is_librarian()):
+    $ config = ({'Please select an identifier.': _('Please select an identifier.'), 'You need to give a value to ID.': _('You need to give a value to ID.'), 'ID ids cannot contain whitespace.': _('ID ids cannot contain whitespace.'), 'ID must be exactly 10 characters [0-9] or X.': _('ID must be exactly 10 characters [0-9] or X.'), 'ID must be exactly 13 digits [0-9]. For example: 978-1-56619-909-4': _('ID must be exactly 13 digits [0-9]. For example: 978-1-56619-909-4')})
+    <fieldset class="major" id="identifiers" data-config="$dumps(config)">
+        <legend>$_("ID Numbers")</legend>
+        <div class="formBack">
 
-        <div id="id-errors" class="note" style="display: none"></div>
-        <div class="formElement">
-            <div class="label">
-                <label for="select-id">$_("Do you know any identifiers for this edition?")</label>
-                <span class="tip">$_("Like, ISBN?")</span>
-            </div>
-            <div class="input">
-                <table class="identifiers">
-                    <tr id="identifiers-form">
-                        <td align="right">
-                            <select name="name" id="select-id">
-                            $ id_labels = dict((d.name, d.label) for d in edition_config.identifiers)
-                            $ id_dict = dict((id.name, id) for id in edition_config.identifiers)
- 							$ popular = ["ocaid", "isbn_10", "isbn_13", "lccn", "oclc_numbers", "goodreads", "librarything"]
-							$ set1 = [id_dict[name] for name in popular if name in id_dict]
-                            $ set2 = sorted([id for id in edition_config.identifiers if id.name not in popular], key=lambda id:id.label)
+            <div id="id-errors" class="note" style="display: none"></div>
+            <div class="formElement">
+                <div class="label">
+                    <label for="select-id">$_("Do you know any identifiers for this edition?")</label>
+                    <span class="tip">$_("Like, ISBN?")</span>
+                </div>
+                <div class="input">
+                    <table class="identifiers">
+                        <tr id="identifiers-form">
+                            <td align="right">
+                                <select name="name" id="select-id">
+                                $ id_labels = dict((d.name, d.label) for d in edition_config.identifiers)
+                                $ id_dict = dict((id.name, id) for id in edition_config.identifiers)
+ 							    $ popular = ["ocaid", "isbn_10", "isbn_13", "lccn", "oclc_numbers", "goodreads", "librarything"]
+							    $ set1 = [id_dict[name] for name in popular if name in id_dict]
+                                $ set2 = sorted([id for id in edition_config.identifiers if id.name not in popular], key=lambda id:id.label)
 
-                                <option value="">$_('Select one of many...')</option>
-                                $for id in set1:
-                                    <option value="$id.name">$id.label</option>
-                                <optgroup label="----------"></optgroup>
-                                $for id in set2:
-                                    <option value="$id.name">$id.label</option>
+                                    <option value="">$_('Select one of many...')</option>
+                                    $for id in set1:
+                                        <option value="$id.name">$id.label</option>
+                                    <optgroup label="----------"></optgroup>
+                                    $for id in set2:
+                                        <option value="$id.name">$id.label</option>
 
-                                <!-- <option>---</option> -->
-                                <!-- <option value="__add__">Add a new ID type</option> -->
-                            </select>
-                        </td>
-                        <td>
-                            <input type="text" name="value" id="id-value"/>
-                        </td>
-                        <td>
-                            <button type="button" name="add" class="repeat-add larger">$_("Add")</button>
-                        </td>
-                    </tr>
-                    <tbody id="identifiers-display">
-                        <tr id="identifiers-template" style="display: none;" class="repeat-item">
-                            <td align="right"><strong>{{\$("#select-id").find("option[value=" + name + "]").html()}}</strong></td>
-                            <td width="380">{{value}}
-                                <input type="hidden" name="{{prefix}}identifiers--{{index}}--name" value="{{name}}"/>
-                                <input type="hidden" name="{{prefix}}identifiers--{{index}}--value" value="{{value}}"/>
+                                    <!-- <option>---</option> -->
+                                    <!-- <option value="__add__">Add a new ID type</option> -->
+                                </select>
                             </td>
-                            <td><a href="javascript:;" class="repeat-remove red plain" title="Remove this identifier">[x]</a></td>
-                        </tr>
-                        <tr>
-                            <td align="right">Open Library</td>
-                            <td>$book.key.split("/")[-1]</td>
-                            <td></td>
-                        </tr>
-                        $for i, id in enumerate(book.get_identifiers().values()):
-                        <tr id="identifiers--$i" class="repeat-item">
-                            <td align="right"><strong>$id_labels.get(id.name, id.name)</strong></td>
-                            <td>$id.value
-                                <input type="hidden" name="edition--identifiers--${i}--name" value="$id.name"/>
-                                <input type="hidden" name="edition--identifiers--${i}--value" value="$id.value"/>
+                            <td>
+                                <input type="text" name="value" id="id-value"/>
                             </td>
-                            $# Disable removing ocaid for regular users.
-                            $ admin_user = ctx.user and (ctx.user.is_admin() or ctx.user.is_librarian())
-                            $if id.name == "ocaid" and not admin_user:
-                                <td></td>
-                            $else:
+                            <td>
+                                <button type="button" name="add" class="repeat-add larger">$_("Add")</button>
+                            </td>
+                        </tr>
+                        <tbody id="identifiers-display">
+                            <tr id="identifiers-template" style="display: none;" class="repeat-item">
+                                <td align="right"><strong>{{\$("#select-id").find("option[value=" + name + "]").html()}}</strong></td>
+                                <td width="380">{{value}}
+                                    <input type="hidden" name="{{prefix}}identifiers--{{index}}--name" value="{{name}}"/>
+                                    <input type="hidden" name="{{prefix}}identifiers--{{index}}--value" value="{{value}}"/>
+                                </td>
                                 <td><a href="javascript:;" class="repeat-remove red plain" title="Remove this identifier">[x]</a></td>
-                        </tr>
-                    </tbody>
-                </table>
+                            </tr>
+                            <tr>
+                                <td align="right">Open Library</td>
+                                <td>$book.key.split("/")[-1]</td>
+                                <td></td>
+                            </tr>
+                            $for i, id in enumerate(book.get_identifiers().values()):
+                            <tr id="identifiers--$i" class="repeat-item">
+                                <td align="right"><strong>$id_labels.get(id.name, id.name)</strong></td>
+                                <td>$id.value
+                                    <input type="hidden" name="edition--identifiers--${i}--name" value="$id.name"/>
+                                    <input type="hidden" name="edition--identifiers--${i}--value" value="$id.value"/>
+                                </td>
+                                $# Disable removing ocaid for regular users.
+                                $ admin_user = ctx.user and (ctx.user.is_admin() or ctx.user.is_librarian())
+                                $if id.name == "ocaid" and not admin_user:
+                                    <td></td>
+                                $else:
+                                    <td><a href="javascript:;" class="repeat-remove red plain" title="Remove this identifier">[x]</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-</fieldset>
+    </fieldset>
 
 <fieldset class="major" id="classifications" data-config="$dumps({'Please select a classification.': _('Please select a classification.'), 'You need to give a value to CLASS.': _('You need to give a value to CLASS.')})">
     <legend>$_("Classifications")</legend>
